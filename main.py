@@ -4,6 +4,7 @@ from sys import stdin
 from random import shuffle
 from inflect import engine
 from openpyxl import Workbook, load_workbook
+from meeting_part import MeetingPart
 
 
 def main():
@@ -17,8 +18,13 @@ def main():
     wt_readers = []
     cbs_readers = []
 
+    MeetingPart("Chairman 2", input_sheet, 'A', True, datetime.date.today())
+    chairman = MeetingPart("Chairman", input_sheet, 'A', True, datetime.date.today())
+    chairman.names
+
 ###########################
 # Put all this into a class
+
     # Retrive all names in column 1 (A)
     for cell in input_sheet['A']:
         if cell.value is not None:
@@ -39,8 +45,10 @@ def main():
 # Tll here
 ##########
 
+
 #############################
 # Make all of this a function
+
     # Get the start date from the input file
     entered_date = input_sheet['C2'].value
     if (entered_date is not None) and not (type(entered_date) == datetime.datetime):
@@ -71,8 +79,10 @@ def main():
 # Till here
 #############################
 
+
 ################################
 # Put all of this into the class
+
     # Write the list of CBS readers
     for i in range(len(cbs_readers)):
         output_sheet.cell(row=13, column=start+i*2).value = cbs_readers[i]
@@ -85,8 +95,10 @@ def main():
 # Till here
 ###########
 
+
 #############################
 # Make all of this a function
+
     # Write the dates to the top of the schedule
     max_weeks = max(len(wt_readers), len(cbs_readers))
     max_weeks
@@ -101,6 +113,7 @@ def main():
 # Till here
 #############################
 
+# Tried this but it didn't work
     # Deleting unnecessary columns (Carzy math xD. BA=53, 'DA' is arbitary)
     output_sheet.delete_cols(start+(max_weeks-1)*2+1, amount=30)
     # output_sheet.move_range("BA1:DA14", cols=((start+(max_weeks-1)*2+1)-53))
@@ -110,6 +123,7 @@ def main():
 
 #############################
 # Make all of this a function
+
     # Save the whole thing to a file named output with renaming if needed
     output_file_path = "Output"
     index = ''
