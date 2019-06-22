@@ -1,5 +1,6 @@
 """Contains Class Meeting Part"""
 import datetime
+from os import path
 from openpyxl import Workbook, load_workbook
 
 
@@ -26,7 +27,7 @@ class MeetingPart:
     """
 
 
-    def __init__(self, input_sheet, column: chr, tuesday: bool, start_date: datetime.date) -> MeetingPart:
+    def __init__(self, input_sheet, column: chr, tuesday: bool, start_date: datetime.date):
         """Initialize the Meeting Part Class object with apropriate variables"""
 
         self.input_sheet = input_sheet
@@ -41,10 +42,10 @@ class MeetingPart:
     def read_names(self):
         """Read the names from the input sheet and store in list names"""
 
-        for cell in self.in_sheet[self.column]:
+        for cell in self.input_sheet[self.column]:
             if cell.value is not None:
                 self.names.append(cell.value)
-        self.part_name = names[0]
+        self.part_name = self.names[0]
         self.names.pop(0)
 
 
@@ -54,17 +55,17 @@ class MeetingPart:
         self.shuffled_names = shuffled_names
 
 
-    def write_to_file (self, row1: int, row2: int, output_sheet, output_sheet2, start_column: int):
+    def write_to_file (self, row: int, col: int, output_sheet, output_sheet2, start_column: int):
         """Write data to output file"""
 
-        if tuesday:
+        if self.tuesday:
             for i in range(len(self.shuffled_names)):
-                output_sheet.cell(row=row1, column=start_column+i*2).value = self.shuffled_names[i]
-                output_sheet2.cell(row=row2+i, column=2).value = self.shuffled_names[i]
+                output_sheet.cell(row=row, column=start_column+i*2).value = self.shuffled_names[i]
+                output_sheet2.cell(row=2+i, column=col).value = self.shuffled_names[i]
         else:
             for i in range(len(self.shuffled_names)):
-                output_sheet.cell(row=row1, column=4+i*2).value = wt_readers[i]
-                output_sheet2.cell(row=row2+i, column=1).value = wt_readers[i]
+                output_sheet.cell(row=row, column=4+i*2).value = wt_readers[i]
+                output_sheet2.cell(row=2+i, column=1).value = wt_readers[i]
 
 
 
@@ -76,8 +77,20 @@ if __name__ == '__main__':
     input_sheet = input_wb.worksheets[0]
     output_sheet = output_wb.worksheets[0]
     output_sheet2 = output_wb.worksheets[1]
-    wt_readers = []
-    cbs_readers = []
 
-    chairman = MeetingPart("Chairman", input_sheet, 'A', True, datetime.date.today())
+    chairman = MeetingPart(input_sheet, 'A', True, datetime.date.today())
+    chairman.part_name
     chairman.names
+    chairman.set_shuffled_names(chairman.names)
+    chairman.write_to_file(3, 1, output_sheet, output_sheet2, 3)
+
+    output_file_path = "Output"
+    index = ''
+    while path.isfile(output_file_path+index+".xlsx"):
+        if index:
+            index = '(' + str(int(index[1:-1]) + 1) + ')'
+        else:
+            index = '(1)'
+    index
+    output_wb.save(output_file_path+index+".xlsx")
+    print("Output file created successfully:", output_file_path+index+".xlsx")
