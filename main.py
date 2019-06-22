@@ -17,6 +17,8 @@ def main():
     wt_readers = []
     cbs_readers = []
 
+###########################
+# Put all this into a class
     # Retrive all names in column 1 (A)
     for cell in input_sheet['A']:
         if cell.value is not None:
@@ -34,7 +36,11 @@ def main():
     # Randomize both lists
     shuffle(wt_readers)
     shuffle(cbs_readers)
+# Tll here
+##########
 
+#############################
+# Make all of this a function
     # Get the start date from the input file
     entered_date = input_sheet['C2'].value
     if (entered_date is not None) and not (type(entered_date) == datetime.datetime):
@@ -62,7 +68,11 @@ def main():
     else:
         tuesday_first = False
         start = 5
+# Till here
+#############################
 
+################################
+# Put all of this into the class
     # Write the list of CBS readers
     for i in range(len(cbs_readers)):
         output_sheet.cell(row=13, column=start+i*2).value = cbs_readers[i]
@@ -72,7 +82,11 @@ def main():
     for i in range(len(wt_readers)):
         output_sheet.cell(row=13, column=4+i*2).value = wt_readers[i]
         output_sheet2.cell(row=2+i, column=1).value = wt_readers[i]
+# Till here
+###########
 
+#############################
+# Make all of this a function
     # Write the dates to the top of the schedule
     max_weeks = max(len(wt_readers), len(cbs_readers))
     max_weeks
@@ -84,14 +98,18 @@ def main():
 
         tuesday += datetime.timedelta(7)
         friday += datetime.timedelta(7)
+# Till here
+#############################
 
-    # Deleting unnecessary columns (Carzy math xD. BA=53, DA is arbitary)
+    # Deleting unnecessary columns (Carzy math xD. BA=53, 'DA' is arbitary)
     output_sheet.delete_cols(start+(max_weeks-1)*2+1, amount=30)
     # output_sheet.move_range("BA1:DA14", cols=((start+(max_weeks-1)*2+1)-53))
     # if not tuesday_first:
     #     # output_sheet.delete_cols(3,1)
     #     output_sheet.move_range("D1:BA14", cols=-1)
 
+#############################
+# Make all of this a function
     # Save the whole thing to a file named output with renaming if needed
     output_file_path = "Output"
     index = ''
@@ -105,6 +123,8 @@ def main():
     print("Output file created successfully:", output_file_path+index+".xlsx")
     print("(Press enter to close)")
     stdin.read(1)
+# Till here
+#############################
 
 
 def check_files():
