@@ -2,7 +2,9 @@
 import datetime
 from os import path
 from inflect import engine
-from openpyxl import Workbook, load_workbook
+from openpyxl import Workbook
+from openpyxl import load_workbook
+from meeting_part import MeetingPart
 
 
 class MeetingPartManager:
@@ -14,19 +16,35 @@ class MeetingPartManager:
         """Initialize the Meeting Part Manager class with input file name, output
         file name, and the cell that contains the start date in the input file"""
 
-        self.in_file_name = in_file_name
-        self.out_file_name = out_file_name  # Misnommer. Should have been template_file_name. But it's ok, don't change.
-        self.date_cell = date_cell
-        self.input_wb = load_workbook(in_file_name, read_only=True)
+        input_wb = load_workbook(in_file_name, read_only=True)
+        self.input_sheet = input_wb.worksheets[0]
         self.output_wb = load_workbook(out_file_name, read_only=False)
-        self.input_sheet = self.input_wb.worksheets[0]
         self.output_sheet = self.output_wb.worksheets[0]
         self.output_sheet2 = self.output_wb.worksheets[1]
+        self.date_cell = date_cell
+        self.meeting_parts = []
+        self.list_of_names = []
+
         self.get_start_date()
+        self.create_Parts()
 
 
     def get_start_date(self):
         """Read the start date from the input file. Default to todays date otherwise."""
+
+        # self.found_date = False
+        # self.no_of_parts = 9
+        # second_row = self.input_sheet[2]
+        # second_row = [second_row[i].value for i in range(len(second_row))]      # convert row cell to row list
+        # for i in range(len(second_row)):
+        #     x = second_row[i]
+        #     if type(second_row[i]) == datetime.datetime:
+        #         self.start_date = second_row[i]
+        #         self.no_of_parts = i - 1
+        #         self.found_date = True
+        #         break
+
+
 
         entered_date = self.input_sheet[self.date_cell].value    # Local Variable
         if (entered_date is not None) and not (type(entered_date) == datetime.datetime):
@@ -39,6 +57,24 @@ class MeetingPartManager:
             print("Defaulting to todays date as input for the start date...")
             start_date = datetime.date.today()
         self.start_date = start_date
+
+
+    def create_parts(self):
+        """Create objects of class MeetingPart and store them in the meeting_parts list.
+        Also add all the names to the names list"""
+
+        first_row = self.input_sheet[1]
+        try:
+            first_row = [first_row[i].value for i in range(len(first_row))]         # convert row cell to row list
+            self.no_of_parts = first_row.index("Enter the start date below") - 1    # Do not include the labels column 'A' (-1)
+        except:
+            self.no_of_parts = 9
+
+        for i in range(self.no_of_parts):
+            col = chr(ord('B') + i)
+            mp = MeetingPart(self.input_sheet, col)
+            self.meeting_parts.append(mp)
+            self.list_of_names.append(mp.get_names())
 
 
     def save_to_file(self):
