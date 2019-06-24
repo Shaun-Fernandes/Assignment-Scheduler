@@ -1,6 +1,9 @@
 """Contains Meeting Part Manager class"""
 import datetime
+import itertools
 from os import path
+from time import time
+from random import shuffle
 from inflect import engine
 from openpyxl import Workbook
 from openpyxl import load_workbook
@@ -11,8 +14,7 @@ class MeetingPartManager:
     """Holds multiple objects of the MeetingPart class.
     """
 
-    def __init__(self, in_file_name:str = "input_file.xlsx", out_file_name:str
-                = "template.xlsx") -> 'MeetingPartManager':
+    def __init__(self, in_file_name:str = "input_file.xlsx", out_file_name:str = "template.xlsx") -> 'MeetingPartManager':
         """Initialize the Meeting Part Manager class with input file name, output
         file name, and the cell that contains the start date in the input file"""
 
@@ -22,11 +24,15 @@ class MeetingPartManager:
         self.output_sheet = self.output_wb.worksheets[0]
         self.output_sheet2 = self.output_wb.worksheets[1]
         # self.date_cell = date_cell
+        self.index_tuesday = {}
+        self.index_friday  = {}
         self.meeting_parts = []
-        self.list_of_names = []
+        self.tuesday_names = []
+        self.friday_names  = []
 
         self.get_start_date()
         self.create_parts()
+        # self.shuffle_list(self.tuesday_names)
 
 
     def get_start_date(self):
@@ -41,7 +47,7 @@ class MeetingPartManager:
             if type(second_row[i]) == datetime.datetime:
                 self.start_date = second_row[i]
                 self.no_of_parts = i - 1            # Do not include the labels column 'A' (-1)
-                self.found_date = True
+                found_date = True
                 break
 
         if not found_date:
@@ -56,11 +62,45 @@ class MeetingPartManager:
             col = chr(ord('A') + i)
             mp = MeetingPart(self.input_sheet, col)
             self.meeting_parts.append(mp)
-            self.list_of_names.append(mp.get_names())
+            if mp.tuesday:
+                self.tuesday_names.append(mp.get_names())
+                self.index_tuesday[len(self.tuesday_names)-1] = i
+            else:
+                self.friday_names.append(mp.get_names())
+                self.index_friday[len(self.friday_names)-1] = i
 
 
-    def randomize_list(self):
-        pass
+
+    def shuffle_list(self, names: list):
+        maxTimeLimit = 0.05
+        timeExceded = True
+        while timeExceded:
+            timeExceded = False
+            startTime = time()
+            shuffle(names[0])
+            for i in range(len(names)):
+                transposedNames = [list(x) for x in itertools.zip_longest(*names[:i+1])]
+                while self.checkDupCols(transposedNames):
+                    shuffle(names[i])
+                    transposedNames = [list(x) for x in itertools.zip_longest(*names[:i+1])]
+                    if( time()-startTime > maxTimeLimit):
+                        print("Time taken for iteration", _, "was  = ", time()-startTime,)
+                        print("Restarting iteration")
+                        timeExceded = True
+                        break
+                if timeExceded:
+                    break
+
+
+    def checkDupCols(self, arr):          #Actually checks duplicate rows, but for a transposed array
+        for row in arr:
+            seen = set()
+            for x in row:
+                if x in seen:
+                    return True
+                if x is not None:
+                    seen.add(x)
+        return False
 
 
     def save_to_file(self):
@@ -120,5 +160,9 @@ if __name__ == '__main__':
     MPM = MeetingPartManager("input_file.xlsx", "template.xlsx")
     MPM.no_of_parts
     MPM.start_date
-    MPM.list_of_names
+    MPM.tuesday_names
+    MPM.friday_names
+    MPM.shuffle_list(MPM.tuesday_names)
+    MPM.tuesday_names
+    MPM.start_date
     # MPM.save_to_file()
