@@ -38,8 +38,8 @@ class MeetingPartManager:
         self.output_sheet = self.output_wb.worksheets[0]
         self.output_sheet2 = self.output_wb.worksheets[1]
         # self.date_cell = date_cell
-        self.index_tuesday = {}
-        self.index_friday  = {}
+        self.index_tuesday = {}             # Dict form 'tuesday_names' : 'meeting_part'
+        self.index_friday  = {}             # Dict form 'friday_names'  : 'meeting_part'
         self.meeting_parts = []
         self.tuesday_names = []
         self.friday_names  = []
@@ -75,13 +75,14 @@ class MeetingPartManager:
         for i in range(self.no_of_parts):
             col = chr(ord('A')+i+1)                 # Skip labels column 'A' (+1)
             mp = MeetingPart(self.input_sheet, col)
-            self.meeting_parts.append(mp)
-            if mp.tuesday:
-                self.tuesday_names.append(mp.get_names())
-                self.index_tuesday[len(self.tuesday_names)-1] = i
-            else:
-                self.friday_names.append(mp.get_names())
-                self.index_friday[len(self.friday_names)-1] = i
+            if not mp.dead:
+                self.meeting_parts.append(mp)
+                if mp.tuesday:
+                    self.tuesday_names.append(mp.get_names())
+                    self.index_tuesday[len(self.tuesday_names)-1] = len(self.meeting_parts)-1
+                else:
+                    self.friday_names.append(mp.get_names())
+                    self.index_friday[len(self.friday_names)-1] = len(self.meeting_parts)-1
 
 
 
@@ -182,12 +183,15 @@ if __name__ == '__main__':
     MPM.shuffle_list(MPM.tuesday_names)
     MPM.shuffle_list(MPM.friday_names)
     MPM.save_to_file()
-    MPM.no_of_parts
-    MPM.start_date
-    MPM.tuesday_names
-    MPM.friday_names
+
+    for i in MPM.meeting_parts:
+        print(i.part_name)
+
     MPM.index_tuesday
     MPM.index_friday
+
+    MPM.no_of_parts
+    MPM.start_date
     MPM.tuesday_names
     MPM.friday_names
     # MPM.save_to_file()
