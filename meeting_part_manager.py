@@ -2,6 +2,7 @@
 import datetime
 import itertools
 from os import path
+from sys import stdin
 from time import time
 from random import shuffle
 from inflect import engine
@@ -11,7 +12,20 @@ from meeting_part import MeetingPart
 
 
 class MeetingPartManager:
-    """Holds multiple objects of the MeetingPart class.
+    """Holds and manages multiple objects of the MeetingPart class. Responsible
+    for creating a list of objects of the class (one entry for each part),
+    randomizing the names returned by the objects without repeating in a column,
+    and saving them back to file.
+
+    The class initializes MeetingPart objects for each meeting part, dynamicaly
+    calculated by checking the date field. The objects read all the names from
+    the corresponding column of the input file, and return them back to this class.
+    The names are then stored in 2-D lists (one for friday and one for tuesday).
+    Each of these lists is then shuffled ensuring that no name is repeated in any
+    given column (thus no one has to do 2 parts on the same day). After getting
+    this new list, the names are added back to the MeetingPart class objects.
+    A function from those objects is then called to write the now randomized names
+    to both sheets of the output file.
     """
 
     def __init__(self, in_file_name:str = "input_file.xlsx", out_file_name:str = "template.xlsx") -> 'MeetingPartManager':
@@ -58,8 +72,8 @@ class MeetingPartManager:
         """Create objects of class MeetingPart and store them in the meeting_parts list.
         Also add all the names to the names list"""
 
-        for i in range(1, self.no_of_parts):
-            col = chr(ord('A') + i)
+        for i in range(self.no_of_parts):
+            col = chr(ord('A')+i+1)                 # Skip labels column 'A' (+1)
             mp = MeetingPart(self.input_sheet, col)
             self.meeting_parts.append(mp)
             if mp.tuesday:
@@ -73,8 +87,18 @@ class MeetingPartManager:
 
     def shuffle_list(self, names: list):
         maxTimeLimit = 0.05
+        count = 0
         timeExceded = True
         while timeExceded:
+            count += 1
+            if count > 100:
+                print("\nUnable to find a sutable combination!")
+                print("Try and run the program again.")
+                print("If the problem persists, there may be a problem with the given input.")
+                print("This might be a list of names that make scheduling without repetition on the same day impossible.")
+                print("Check input file for potential reasons for this deadlock")
+                print("\nExiting program....")
+                exit()
             timeExceded = False
             startTime = time()
             shuffle(names[0])
@@ -84,15 +108,16 @@ class MeetingPartManager:
                     shuffle(names[i])
                     transposedNames = [list(x) for x in itertools.zip_longest(*names[:i+1])]
                     if( time()-startTime > maxTimeLimit):
-                        print("Time taken for iteration", _, "was  = ", time()-startTime,)
+                        print(count, "Time taken for randomization was too long")
                         print("Restarting iteration")
                         timeExceded = True
                         break
                 if timeExceded:
                     break
+        print("Found a combination that has no conflicts")
 
 
-    def checkDupCols(self, arr):          #Actually checks duplicate rows, but for a transposed array
+    def checkDupCols(self, arr):          # Technically it checks duplicate rows, but for a transposed array, so its the original's columns
         for row in arr:
             seen = set()
             for x in row:
@@ -107,30 +132,26 @@ class MeetingPartManager:
         # Get the next tuesday and friday from the given date (inclusive)
         tuesday = self.start_date + datetime.timedelta((1 - self.start_date.weekday()) % 7)
         friday = self.start_date + datetime.timedelta((4 - self.start_date.weekday()) % 7)
-
-        tuesday
-        friday
-
         # Check wether tuesday comes first or not
-        if (tuesday < friday):
-            tuesday_first = True
+        tuesday_first = (tuesday < friday)
+        if (tuesday_first):
             start_column = 3
         else:
-            tuesday_first = False
             start_column = 5
 
+        # Save the shuffled list back to the class objects
+        for i in range(len(self.tuesday_names)):
+            self.meeting_parts[self.index_tuesday[i]].set_shuffled_names(self.tuesday_names[i])
+        for i in range(len(self.friday_names)):
+            self.meeting_parts[self.index_friday[i]].set_shuffled_names(self.friday_names[i])
 
-        ###################################################
-        # Add code to save names from each part to file.  #
-        # Call the write_to_file() funciton for each part #
-        ###################################################
-
+        # Write the new list of names to the output file
+        for i in range(len(self.meeting_parts)):
+            self.meeting_parts[i].write_to_file(self.output_sheet, self.output_sheet2, start_column)
 
         #Write dates to the top of the file.
-        # max_weeks = max(len(wt_readers), len(cbs_readers))
-        max_weeks = 15
-        max_weeks
         p = engine()
+        max_weeks = len( max( max(self.tuesday_names, key=len), max(self.friday_names, key=len), key=len ))
         for i in range(max_weeks):
             date1 = p.ordinal(tuesday.day) + " " + tuesday.strftime('%B')
             date2 = p.ordinal(friday.day) + " " + friday.strftime('%B')
@@ -140,7 +161,7 @@ class MeetingPartManager:
             tuesday += datetime.timedelta(7)
             friday += datetime.timedelta(7)
 
-        # Save the whole thing to a file named output with renaming if needed
+        # Save the altered output workbook to a file named Output(n).xlsx with renaming if duplicate present
         output_file_path = "Output"
         index = ''
         while path.isfile(output_file_path+index+".xlsx"):
@@ -150,19 +171,23 @@ class MeetingPartManager:
                 index = '(1)'
 
         self.output_wb.save(output_file_path+index+".xlsx")
-        print("Output file created successfully:", output_file_path+index+".xlsx")
+        print("\nOutput file created successfully:", output_file_path+index+".xlsx")
         print("(Press enter to close)")
-        # stdin.read(1)
+        stdin.read(1)
 
 
 
 if __name__ == '__main__':
     MPM = MeetingPartManager("input_file.xlsx", "template.xlsx")
+    MPM.shuffle_list(MPM.tuesday_names)
+    MPM.shuffle_list(MPM.friday_names)
+    MPM.save_to_file()
     MPM.no_of_parts
     MPM.start_date
     MPM.tuesday_names
     MPM.friday_names
-    MPM.shuffle_list(MPM.tuesday_names)
+    MPM.index_tuesday
+    MPM.index_friday
     MPM.tuesday_names
-    MPM.start_date
+    MPM.friday_names
     # MPM.save_to_file()
