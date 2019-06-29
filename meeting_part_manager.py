@@ -46,7 +46,6 @@ class MeetingPartManager:
 
         self.get_start_date()
         self.create_parts()
-        # self.shuffle_list(self.tuesday_names)
 
 
     def get_start_date(self):
@@ -60,7 +59,7 @@ class MeetingPartManager:
         for i in range(len(second_row)):
             if type(second_row[i]) == datetime.datetime:
                 self.start_date = second_row[i]
-                self.no_of_parts = i - 1            # Do not include the labels column 'A' (-1)
+                self.no_of_parts = i - 1            # Do not include column 'A' (-1)
                 found_date = True
                 break
 
@@ -93,11 +92,11 @@ class MeetingPartManager:
         while timeExceded:
             count += 1
             if count > 100:
-                print("\nUnable to find a sutable combination!")
+                print("\nUnable to create a suitable schedule!")
                 print("Try and run the program again.")
-                print("If the problem persists, there may be a problem with the given input.")
-                print("This might be a list of names that make scheduling without repetition on the same day impossible.")
-                print("Check input file for potential reasons for this deadlock")
+                print("If the error persists, there may be a problem with the input.")
+                print("It might not be possible to scheduling the given input without a clash.")
+                print("Try using a different input to see if it solves the problem.")
                 print("\nExiting program....")
                 exit()
             timeExceded = False
@@ -109,8 +108,8 @@ class MeetingPartManager:
                     shuffle(names[i])
                     transposedNames = [list(x) for x in itertools.zip_longest(*names[:i+1])]
                     if( time()-startTime > maxTimeLimit):
-                        print(count, "Time taken for randomization was too long")
-                        print("Restarting iteration")
+                        # print(count, "Time taken for randomization was too long")
+                        # print("Restarting iteration")
                         timeExceded = True
                         break
                 if timeExceded:
@@ -150,7 +149,7 @@ class MeetingPartManager:
         for i in range(len(self.meeting_parts)):
             self.meeting_parts[i].write_to_file(self.output_sheet, self.output_sheet2, start_column)
 
-        #Write dates to the top of the file.
+        # Write dates to the top of the file.
         p = engine()
         max_weeks = len( max( max(self.tuesday_names, key=len), max(self.friday_names, key=len), key=len ))
         for i in range(max_weeks):
@@ -175,23 +174,3 @@ class MeetingPartManager:
         print("\nOutput file created successfully:", output_file_path+index+".xlsx")
         print("(Press enter to close)")
         stdin.read(1)
-
-
-
-if __name__ == '__main__':
-    MPM = MeetingPartManager("input_file.xlsx", "template.xlsx")
-    MPM.shuffle_list(MPM.tuesday_names)
-    MPM.shuffle_list(MPM.friday_names)
-    MPM.save_to_file()
-
-    for i in MPM.meeting_parts:
-        print(i.part_name)
-
-    MPM.index_tuesday
-    MPM.index_friday
-
-    MPM.no_of_parts
-    MPM.start_date
-    MPM.tuesday_names
-    MPM.friday_names
-    # MPM.save_to_file()
