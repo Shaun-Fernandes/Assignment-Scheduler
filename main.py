@@ -27,6 +27,7 @@ def check_files(file1: str = "input_file.xlsx", file2: str = "template.xlsx") ->
 
 
 if __name__ == '__main__':
+    print("Please wait while the program runs...\n")
     if not check_files("input_file.xlsx", "template.xlsx"):
         exit()
     MPM = MeetingPartManager("input_file.xlsx", "template.xlsx")
