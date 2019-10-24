@@ -1,5 +1,7 @@
 from os import path
+from sys import stdin
 from meeting_part_manager import MeetingPartManager
+
 
 def check_files(file1: str = "input_file.xlsx", file2: str = "template.xlsx") -> bool:
     """Return true if both the files are present. Else return False"""

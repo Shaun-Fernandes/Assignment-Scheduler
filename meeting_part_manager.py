@@ -1,11 +1,14 @@
 """Contains Meeting Part Manager class"""
+import os
 import datetime
 import itertools
+import subprocess
 from os import path
 from sys import stdin
 from time import time
 from random import shuffle
 from inflect import engine
+from platform import system
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from meeting_part import MeetingPart
@@ -28,7 +31,7 @@ class MeetingPartManager:
     to both sheets of the output file.
     """
 
-    def __init__(self, in_file_name:str = "input_file.xlsx", out_file_name:str = "template.xlsx") -> 'MeetingPartManager':
+    def __init__(self, in_file_name: str = "input_file.xlsx", out_file_name: str = "template.xlsx") -> 'MeetingPartManager':
         """Initialize the Meeting Part Manager class with input file name, output
         file name, and the cell that contains the start date in the input file"""
 
@@ -39,14 +42,13 @@ class MeetingPartManager:
         self.output_sheet2 = self.output_wb.worksheets[1]
         # self.date_cell = date_cell
         self.index_tuesday = {}             # Dict form 'tuesday_names' : 'meeting_part'
-        self.index_friday  = {}             # Dict form 'friday_names'  : 'meeting_part'
+        self.index_friday = {}             # Dict form 'friday_names'  : 'meeting_part'
         self.meeting_parts = []
         self.tuesday_names = []
-        self.friday_names  = []
+        self.friday_names = []
 
         self.get_start_date()
         self.create_parts()
-
 
     def get_start_date(self):
         """Read the start date from the input file. Default to todays date otherwise."""
@@ -66,7 +68,6 @@ class MeetingPartManager:
         if not found_date:
             print("Defaulting to todays date as input for the start date...")
 
-
     def create_parts(self):
         """Create objects of class MeetingPart and store them in the meeting_parts list.
         Also add all the names to the names list"""
@@ -82,8 +83,6 @@ class MeetingPartManager:
                 else:
                     self.friday_names.append(mp.get_names())
                     self.index_friday[len(self.friday_names)-1] = len(self.meeting_parts)-1
-
-
 
     def shuffle_list(self, names: list):
         maxTimeLimit = 0.05
@@ -107,7 +106,7 @@ class MeetingPartManager:
                 while self.checkDupCols(transposedNames):
                     shuffle(names[i])
                     transposedNames = [list(x) for x in itertools.zip_longest(*names[:i+1])]
-                    if( time()-startTime > maxTimeLimit):
+                    if(time()-startTime > maxTimeLimit):
                         # print(count, "Time taken for randomization was too long")
                         # print("Restarting iteration")
                         timeExceded = True
@@ -115,7 +114,6 @@ class MeetingPartManager:
                 if timeExceded:
                     break
         print("Found a combination that has no conflicts")
-
 
     def checkDupCols(self, arr):          # Technically it checks duplicate rows, but for a transposed array, so its the original's columns
         for row in arr:
@@ -126,7 +124,6 @@ class MeetingPartManager:
                 if x is not None:
                     seen.add(x)
         return False
-
 
     def save_to_file(self):
         # Get the next tuesday and friday from the given date (inclusive)
@@ -151,7 +148,7 @@ class MeetingPartManager:
 
         # Write dates to the top of the file.
         p = engine()
-        max_weeks = len( max( max(self.tuesday_names, key=len), max(self.friday_names, key=len), key=len ))
+        max_weeks = len(max(max(self.tuesday_names, key=len), max(self.friday_names, key=len), key=len))
         for i in range(max_weeks):
             date1 = p.ordinal(tuesday.day) + " " + tuesday.strftime('%B')
             date2 = p.ordinal(friday.day) + " " + friday.strftime('%B')
@@ -172,5 +169,9 @@ class MeetingPartManager:
 
         self.output_wb.save(output_file_path+index+".xlsx")
         print("\nOutput file created successfully:", output_file_path+index+".xlsx")
+        if system() == 'Windows':
+            os.startfile(output_file_path+index+".xlsx")
+        else:                                   # linux variants
+            subprocess.call(('xdg-open', output_file_path+index+".xlsx"))
         print("(Press enter to close)")
         stdin.read(1)
